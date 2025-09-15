@@ -1,9 +1,10 @@
 package guru.springframework.spring6restmvc.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6restmvc.model.Beer;
 import guru.springframework.spring6restmvc.service.BeerService;
 import guru.springframework.spring6restmvc.service.BeerServiceImpl;
-import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -11,11 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,10 +32,18 @@ public class BeerControllerTest {
   @Autowired
   private MockMvc mockMvc;
 
+  @Autowired
+  ObjectMapper objectMapper;
+
   @MockitoBean
   private BeerService beerService;
 
-  private BeerServiceImpl beerServiceImpl = new BeerServiceImpl();
+  private BeerServiceImpl beerServiceImpl;
+
+  @BeforeEach
+  void setUp() throws Exception {
+    beerServiceImpl = new BeerServiceImpl();
+  }
 
   @Test
   public void getBeerById() throws Exception {
@@ -62,6 +72,21 @@ public class BeerControllerTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.length()", is(beerServiceImpl.listBeers().size())));
+  }
+
+  @Test
+  public void createBeer() throws Exception {
+    Beer testBeer = beerServiceImpl.listBeers().get(0);
+    testBeer.setVersion(null);
+    testBeer.setId(null);
+
+    given(beerService.saveNewBeer(any(Beer.class))).willReturn(beerServiceImpl.listBeers().get(1));
+
+    mockMvc.perform(post("/api/v1/beer")
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(testBeer)))
+        .andExpect(status().isCreated())
+        .andExpect(header().exists("Location"));
   }
 
 }
