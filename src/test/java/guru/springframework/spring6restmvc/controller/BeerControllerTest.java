@@ -4,19 +4,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6restmvc.model.Beer;
 import guru.springframework.spring6restmvc.service.BeerService;
 import guru.springframework.spring6restmvc.service.BeerServiceImpl;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -40,6 +46,9 @@ public class BeerControllerTest {
 
   @MockitoBean
   private BeerService beerService;
+
+  @Captor
+  ArgumentCaptor<Beer> beerCaptor;
 
   private BeerServiceImpl beerServiceImpl;
 
@@ -113,6 +122,26 @@ public class BeerControllerTest {
         .andExpect(status().isNoContent());
 
     verify(beerService).deleteById(testBeer.getId());
+  }
+
+  @Test
+  public void patchBeer() throws Exception {
+    Beer testBeer = beerServiceImpl.listBeers().get(0);
+
+    Map<String,Object> beerMap = new HashMap<>();
+    beerMap.put("beerName", "New Beer Name");
+
+    mockMvc.perform(patch("/api/v1/beer/" + testBeer.getId())
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(beerMap))).andExpect(status().isNoContent());
+
+    verify(beerService).patchBeerById(any(), beerCaptor.capture());
+
+    assertThat(beerMap.get("beerName")).isEqualTo(beerCaptor.getValue().getBeerName());
+
+
+
   }
 
 }

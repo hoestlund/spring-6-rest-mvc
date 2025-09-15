@@ -1,10 +1,12 @@
 package guru.springframework.spring6restmvc.controller;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -16,7 +18,11 @@ import guru.springframework.spring6restmvc.model.Customer;
 import guru.springframework.spring6restmvc.service.BeerService;
 import guru.springframework.spring6restmvc.service.CustomerService;
 import guru.springframework.spring6restmvc.service.CustomerServiceImpl;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -36,6 +42,9 @@ public class CustomerControllerTest {
 
   @Autowired
   ObjectMapper objectMapper;
+
+  @Captor
+  ArgumentCaptor<Customer> customerCaptor;
 
   @MockitoBean
   private CustomerService customerService;
@@ -91,5 +100,21 @@ public class CustomerControllerTest {
         .andExpect(status().isNoContent());
 
     verify(customerService).deleteCustomerById(testCustomer.getId());
+  }
+
+  @Test
+  public void patchCustomer() throws Exception {
+    Customer testCustomer = customerServiceImpl.getAllCustomers().get(0);
+
+    Map<String,Object> customerMap = new HashMap<>();
+    customerMap.put("name", "New Customer Name");
+
+    mockMvc.perform(patch("/api/v1/customer/" + testCustomer.getId())
+            .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(customerMap)))
+        .andExpect(status().isNoContent());
+
+    verify(customerService).patchCustomerById(any(), customerCaptor.capture());
+
+    assertThat(customerMap.get("name")).isEqualTo(customerCaptor.getValue().getName());
   }
 }
