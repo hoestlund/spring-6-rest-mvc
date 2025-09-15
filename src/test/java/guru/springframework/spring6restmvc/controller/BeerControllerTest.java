@@ -12,9 +12,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static java.util.UUID.randomUUID;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.mockito.BDDMockito.given;
@@ -37,12 +39,18 @@ public class BeerControllerTest {
   public void getBeerById() throws Exception {
     Beer testBeer = beerServiceImpl.listBeers().get(0);
 
-    given(beerService.getBeerById(any(UUID.class))).willReturn(testBeer);
+    given(beerService.getBeerById(testBeer.getId())).willReturn(testBeer);
 
-    mockMvc.perform(get("/api/v1/beer/" + randomUUID())
+    mockMvc.perform(get("/api/v1/beer/" + testBeer.getId())
         .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id", is(testBeer.getId().toString())))
+        .andExpect(jsonPath("$.beerName", is(testBeer.getBeerName())))
+        .andExpect(jsonPath("$.beerStyle", is(testBeer.getBeerStyle().toString())))
+        .andExpect(jsonPath("$.upc", is(testBeer.getUpc())))
+        .andExpect(jsonPath("$.price", is(testBeer.getPrice().doubleValue())))
+        .andExpect(jsonPath("$.quantityOnHand", is(testBeer.getQuantityOnHand())));
   }
 
 }
