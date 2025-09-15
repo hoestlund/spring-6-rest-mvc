@@ -2,8 +2,10 @@ package guru.springframework.spring6restmvc.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -65,5 +67,17 @@ public class CustomerControllerTest {
             .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(testCustomer)))
         .andExpect(status().isCreated())
         .andExpect(header().exists("Location"));
+  }
+
+  @Test
+  public void updateCustomer() throws Exception {
+    Customer testCustomer = customerServiceImpl.getAllCustomers().get(0);
+
+    mockMvc.perform(put("/api/v1/customer/" + testCustomer.getId())
+        .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(testCustomer)));
+
+    verify(customerService).updateCustomerById(testCustomer.getId(), testCustomer);
   }
 }
