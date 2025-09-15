@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -101,6 +102,17 @@ public class BeerControllerTest {
         .content(objectMapper.writeValueAsString(testBeer)));
 
     verify(beerService).updateBeerById(testBeer.getId(), testBeer);
+  }
+
+  @Test
+  public void deleteBeer() throws Exception {
+    Beer testBeer = beerServiceImpl.listBeers().get(0);
+
+    mockMvc.perform(delete("/api/v1/beer/" + testBeer.getId())
+        .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent());
+
+    verify(beerService).deleteById(testBeer.getId());
   }
 
 }
